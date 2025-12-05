@@ -4,6 +4,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import org.json.simple.JSONArray;
 
 
 // video to load jar
@@ -41,7 +42,7 @@ public class ReadJson {
 
     public  void pull() throws ParseException {
         String output = "abc";
-        String totlaJson="";
+        String totlaJson = "";
         try {
 
             URL url = new URL("https://pokeapi.co/api/v2/pokemon/ditto");
@@ -65,7 +66,7 @@ public class ReadJson {
             //System.out.println("Output from Server .... \n");
             while ((output = br.readLine()) != null) {
                 //System.out.println(output);
-                totlaJson+=output;
+                totlaJson += output;
             }
 
             conn.disconnect();
@@ -84,26 +85,23 @@ public class ReadJson {
 
         try {
 
-            org.json.simple.JSONObject abilities = (org.json.simple.JSONObject) jsonObject.get("abilities");
-            int n =   abilities.size();
-            for (int i = 0; i < n; ++i) {
-                String Starships =(String) msg.get(i);
-                System.out.println(Starships);
-                // System.out.println(person.getInt("key"));
+            JSONArray abilities = (JSONArray) jsonObject.get("abilities");
+
+            for (Object obj : abilities) {
+                JSONObject abilityEntry = (JSONObject) obj;
+                JSONObject ability = (JSONObject) abilityEntry.get("ability");
+                String abilityName = (String) ability.get("name");
+
+                System.out.println(abilityName);
+
+
             }
 
-            String height= (String)jsonObject.get("abilities");
-            System.out.println(height);
-
-
-        }
-
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
+        } catch(Exception e){
+                e.printStackTrace();
+            }
 
 
     }
+
 }
