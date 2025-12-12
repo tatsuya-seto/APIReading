@@ -20,20 +20,21 @@ import org.json.simple.parser.ParseException;
 // Program for print data in JSON format.
 public class ReadJson implements ActionListener {
     private JFrame mainFrame;
-    private JLabel FillerLabel1;
+    private JLabel NameLabel;
     private JLabel InsertLinkLabel;
     private JLabel FillerLabel2;
     private JLabel SearchWordLabel;
     private JLabel FillerLabel3;
-    private JEditorPane outputArea;
+    private JEditorPane AbilitytArea;
     private JPanel BottomPanel;
     private JPanel TopPanel;
     private JPanel LongPanel;
-    private JPanel MidPanel;
-    private JPanel GoPanel;
+    private JPanel LeftPanel;
+    private JPanel RightPanel;
     private JPanel SearchPanel;
     private JTextField ta;   // typing area
-    private JTextField Link; // typing area
+    private JTextField Link;// typing area
+    private JEditorPane InfoArea;
     private int WIDTH = 800;
     private int HEIGHT = 700;
 
@@ -65,8 +66,8 @@ public class ReadJson implements ActionListener {
         ta.setSize(1, 1);
 
         // spacing labels
-        FillerLabel1 = new JLabel("               ", JLabel.CENTER);
-        FillerLabel1.setSize(5, 100);
+        NameLabel = new JLabel("               ", JLabel.CENTER);
+        NameLabel.setSize(5, 100);
 
         InsertLinkLabel = new JLabel("       Insert Link: ", JLabel.RIGHT);
         InsertLinkLabel.setSize(350, 100);
@@ -81,11 +82,11 @@ public class ReadJson implements ActionListener {
         FillerLabel3.setSize(350, 100);
 
         // output area (HTML so links are clickable)
-        outputArea = new JEditorPane();
-        outputArea.setText("Insert a link and search term to get the links you need!");
-        outputArea.setEditable(false);
-        outputArea.setContentType("text/html");
-        outputArea.addHyperlinkListener(e -> {
+        AbilitytArea = new JEditorPane();
+        AbilitytArea.setText("Insert a link and search term to get the links you need!");
+        AbilitytArea.setEditable(false);
+        AbilitytArea.setContentType("text/html");
+        AbilitytArea.addHyperlinkListener(e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 try {
                     Desktop.getDesktop().browse(e.getURL().toURI());
@@ -95,7 +96,21 @@ public class ReadJson implements ActionListener {
             }
         });
 
-        JScrollPane scroll = new JScrollPane(outputArea);
+        InfoArea = new JEditorPane();
+        InfoArea.setText("Insert a link and search term to get the links you need!");
+        InfoArea.setEditable(false);
+        InfoArea.setContentType("text/html");
+        InfoArea.addHyperlinkListener(e -> {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                try {
+                    Desktop.getDesktop().browse(e.getURL().toURI());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        JScrollPane scroll = new JScrollPane(AbilitytArea);
         scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         mainFrame.addWindowListener(new WindowAdapter() {
@@ -110,30 +125,35 @@ public class ReadJson implements ActionListener {
         BottomPanel.setVisible(true);
 
         TopPanel = new JPanel();
-        TopPanel.setLayout(new GridLayout(1, 1));
+        TopPanel.setLayout(new GridLayout(1, 2));
         TopPanel.setVisible(true);
 
         LongPanel = new JPanel();
         LongPanel.setLayout(new BorderLayout());
         LongPanel.setVisible(true);
 
-        MidPanel = new JPanel();
-        MidPanel.setLayout(new BorderLayout());
-        MidPanel.setVisible(true);
+        LeftPanel = new JPanel();
+        LeftPanel.setLayout(new BorderLayout());
+        LeftPanel.setVisible(true);
 
         SearchPanel = new JPanel();
-        SearchPanel.setLayout(new GridLayout(1, 4));
+        SearchPanel.setLayout(new GridLayout(1, 3));
         SearchPanel.setVisible(true);
 
-        GoPanel = new JPanel();
-        GoPanel.setLayout(new BorderLayout());
-        GoPanel.setVisible(true);
+        RightPanel = new JPanel();
+        RightPanel.setLayout(new GridLayout(2, 1));
+        RightPanel.setVisible(true);
 
         // Go button
-        JButton goButton = new JButton("Go");
-        goButton.setSize(20, 1);
-        goButton.setActionCommand("go");
-        goButton.addActionListener(new ButtonClickListener());
+        JButton NextButton = new JButton("Next");
+        NextButton.setSize(20, 1);
+        NextButton.setActionCommand("next");
+        NextButton.addActionListener(new ButtonClickListener());
+
+        JButton BackButton = new JButton("Back");
+        BackButton.setSize(20, 1);
+        BackButton.setActionCommand("back");
+        BackButton.addActionListener(new ButtonClickListener());
 
         // Add panels to frame
         mainFrame.add(TopPanel, BorderLayout.CENTER);
@@ -142,22 +162,20 @@ public class ReadJson implements ActionListener {
         BottomPanel.add(LongPanel);   // link area
         BottomPanel.add(SearchPanel); // search term + go
 
-        TopPanel.add(scroll);
+        TopPanel.add(LeftPanel);
+        TopPanel.add(RightPanel);
+
+        RightPanel.add(InfoArea);
+        RightPanel.add(scroll);
 
         // Link row
-        LongPanel.add(InsertLinkLabel, BorderLayout.WEST);
-        LongPanel.add(Link, BorderLayout.CENTER);
-        LongPanel.add(FillerLabel1, BorderLayout.EAST);
+        LongPanel.add(NameLabel, BorderLayout.CENTER);
 
         // Search row
-        SearchPanel.add(SearchWordLabel);
+        SearchPanel.add(BackButton);
         SearchPanel.add(ta);
-        SearchPanel.add(GoPanel);
-        SearchPanel.add(FillerLabel3);
+        SearchPanel.add(NextButton);
 
-        // Go panel
-        GoPanel.add(FillerLabel2, BorderLayout.WEST);
-        GoPanel.add(goButton, BorderLayout.CENTER);
 
         mainFrame.setVisible(true);
     }
@@ -223,74 +241,9 @@ public class ReadJson implements ActionListener {
         //handles click events
         public void actionPerformed(ActionEvent e) {
             String command = e.getActionCommand(); //which button was pressed?
-            if (command.equals("go")) { //checks if command was go(go is the command for the go button)
-                String urlText = Link.getText().trim(); //link input
-                String searchword = ta.getText().trim(); //search term input
-
-                if (urlText.isEmpty() || searchword.isEmpty()) {
-                    outputArea.setText("Please enter both a link and a search word");
-                    return;
-                }
-
-                String allLinks = ""; //stores matching links found
-                try {
-                    URL url = new URL(urlText); //creates url object from input
-
-                    URLConnection urlc = url.openConnection();
-                    urlc.setRequestProperty(
-                            "User-Agent",
-                            "Mozilla 5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.0.11)"
-                    );
-
-                    BufferedReader reader = new BufferedReader(
-                            new InputStreamReader(urlc.getInputStream())
-                    );
-
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        int pos = 0; //start position for searching within the line
-                        while ((pos = line.indexOf("href=", pos)) != -1) { //find EACH occurrence of href
-                            int start = pos + 5; //moving past href=
-                            char quote = line.charAt(start); //quote char
-                            if (quote == '"' || quote == '\'') {
-                                int end = line.indexOf(quote, start + 1); //closing quote
-                                if (end != -1) {
-                                    String link = line.substring(start + 1, end); //extract link
-                                    if (link.contains(searchword)) { //contains search term
-                                        allLinks += link + "\n";
-                                    }
-                                    pos = end + 1;
-                                } else break;
-                            } else break;
-                        }
-                    }
-                    reader.close();
-                } catch (Exception ex) {
-                    allLinks = "Error: " + ex.getMessage();
-                }
-
-                if (allLinks.isEmpty()) {
-                    allLinks = "No links found containing \"" + searchword + "\"";
-                } else {
-                    //build HTML with clickable links
-                    StringBuilder html = new StringBuilder("<html><body>");
-                    String[] lines = allLinks.split("\\R");
-                    for (String link : lines) {
-                        link = link.trim();
-                        if (link.isEmpty()) continue;
-
-                        html.append("<a href=\"")
-                                .append(link)
-                                .append("\">")
-                                .append(link)
-                                .append("</a><br>");
-                    }
-                    html.append("</body></html>");
-
-                    outputArea.setText(html.toString());
-                }
+            if (command.equals("next")) { //checks if command was go(go is the command for the next button)
             }
         }
+
     }
 }
-
