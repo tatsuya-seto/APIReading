@@ -16,6 +16,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 
 // Program for print data in JSON format.
 public class ReadJson implements ActionListener {
@@ -32,6 +34,7 @@ public class ReadJson implements ActionListener {
     private JPanel LeftPanel;
     private JPanel RightPanel;
     private JPanel SearchPanel;
+    private JLabel pokemonImageLabel;
     private JTextField ta;   // typing area
     private JTextField Link;// typing area
     private JEditorPane InfoArea;
@@ -164,6 +167,9 @@ public class ReadJson implements ActionListener {
 
         TopPanel.add(LeftPanel);
         TopPanel.add(RightPanel);
+
+        pokemonImageLabel = new JLabel("No image yet", JLabel.CENTER);
+        LeftPanel.add(pokemonImageLabel, BorderLayout.CENTER);
 
         RightPanel.add(InfoArea);
         RightPanel.add(scroll);
