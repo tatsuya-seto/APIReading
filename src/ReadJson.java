@@ -40,12 +40,14 @@ public class ReadJson implements ActionListener {
     private JEditorPane InfoArea;
     private int WIDTH = 800;
     private int HEIGHT = 700;
+    private int currentId = 1;      // start at Bulbasaur
+    private final int MAX_ID = 1026; // upper bound
 
     public ReadJson() {
         initGUI();
 
         try {
-            loadPokemonList();
+            initGUI();
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -186,68 +188,74 @@ public class ReadJson implements ActionListener {
         mainFrame.setVisible(true);
     }
 
-    private void loadPokemonList() throws ParseException {
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+    }
+
+    private void loadPokemonById(int id) {
         String output;
-        String totalJson = "";
+        StringBuilder totalJson = new StringBuilder();
 
         try {
-            URL url = new URL("https://pokeapi.co/api/v2/pokemon");
+            URL url = new URL("https://pokeapi.co/api/v2/pokemon/" + id);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/json");
-            // conn.setRequestProperty("User-Agent", "Mozilla/5.0");
 
             if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode());
+                throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
             }
 
-            BufferedReader br = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream())
-            );
-
-            while ((output = br.readLine()) != null) {
-                totalJson += output;
-            }
-
+            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            while ((output = br.readLine()) != null) totalJson.append(output);
             conn.disconnect();
 
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception ex) {
+            ex.printStackTrace();
             return;
         }
 
         JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(totalJson);
-
+        JSONObject jsonObject;
         try {
-            // NOTE: for https://pokeapi.co/api/v2/pokemon,
-            // the JSON has "results": [ { "name": ..., "url": ... }, ... ]
-            JSONArray results = (JSONArray) jsonObject.get("results");
-
-            for (Object obj : results) {
-                JSONObject pokemonEntry = (JSONObject) obj;
-                String name = (String) pokemonEntry.get("name");
-                System.out.println(name); // for now: print to console
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            jsonObject = (JSONObject) parser.parse(totalJson.toString());
+        } catch (ParseException ex) {
+            ex.printStackTrace();
+            return;
         }
-    }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
+        JSONArray stats = (JSONArray) jsonObject.get("stats");
+        StringBuilder statsHtml = new StringBuilder("<html><body>");
+        statsHtml.append("<h2>#").append(id).append(" ").append((String) jsonObject.get("name")).append("</h2>");
+
+        for (Object obj : stats) {
+            JSONObject statEntry = (JSONObject) obj;
+            long base = (long) statEntry.get("base_stat");
+            JSONObject statObj = (JSONObject) statEntry.get("stat");
+            String statName = (String) statObj.get("name");
+            statsHtml.append(statName).append(": ").append(base).append("<br>");
+        }
+        statsHtml.append("</body></html>");
+        InfoArea.setText(statsHtml.toString());
+
+        ta.setText(""); // optional: clear search box
     }
 
     private class ButtonClickListener implements ActionListener {
         //handles click events
         public void actionPerformed(ActionEvent e) {
             String command = e.getActionCommand(); //which button was pressed?
-            if (command.equals("next")) { //checks if command was go(go is the command for the next button)
+            if (command.equals("next")) {
+                currentId++;
+                if (currentId > MAX_ID) currentId = 1; // wrap around
+                loadPokemonById(currentId);
+            }
+
+            if (command.equals("back")) {
+                currentId--;
+                if (currentId < 1) currentId = MAX_ID; // wrap around
+                loadPokemonById(currentId);
             }
         }
 
